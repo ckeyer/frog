@@ -32,7 +32,17 @@ func rootCmd() *cobra.Command {
 				return
 			}
 
-			logrus.Debugf("config: %+v", cfg)
+			logrus.Debugf("config.Global: %+v", cfg.Global)
+			for _, r := range cfg.Registries {
+				logrus.Debugf("config.Registry: %+v", r)
+			}
+			i := 1
+			for _, task := range cfg.Tasks {
+				for _, tag := range task.Tags {
+					logrus.Debugf("task %3d: %s:%s -> %s:%s", i, task.Origin, tag, task.Target, tag)
+					i++
+				}
+			}
 
 			if err := Run(cfg); err != nil {
 				logrus.Error(err)
