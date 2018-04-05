@@ -65,6 +65,7 @@ func PullTagPushDelete(origin, target, tag string, del bool) error {
 			dockerDelete(src)
 		}
 	}()
+
 	if err := dockerTag(src, dst); err != nil {
 		return err
 	}
@@ -74,9 +75,5 @@ func PullTagPushDelete(origin, target, tag string, del bool) error {
 		}
 	}()
 
-	if err := dockerPush(dst); err != nil {
-		return err
-	}
-
-	return nil
+	return dockerPush(dst)
 }
