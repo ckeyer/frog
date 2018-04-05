@@ -12,26 +12,26 @@
 		{
 			"checksumSHA1": "NcH9iGLV1KaEe4V2MO0cjptWFZI=",
 			"path": "github.com/ckeyer/commons/debug",
-			"revision": "2935a7030df1b17876faacc7f64f963de388f123",
-			"revisionTime": "2018-04-04T07:27:10Z"
+			"revision": "6d20d597a9b0d7f640031abcecbe9f7f4625c178",
+			"revisionTime": "2018-04-05T18:02:45Z"
 		},
 		{
 			"checksumSHA1": "e4sjCEyGvaGNVox9HwCkWigVQVE=",
 			"path": "github.com/ckeyer/commons/pid",
-			"revision": "2935a7030df1b17876faacc7f64f963de388f123",
-			"revisionTime": "2018-04-04T07:27:10Z"
+			"revision": "6d20d597a9b0d7f640031abcecbe9f7f4625c178",
+			"revisionTime": "2018-04-05T18:02:45Z"
 		},
 		{
 			"checksumSHA1": "3xcjEO1iD1ZQO13RPLOBjeqIY2U=",
 			"path": "github.com/ckeyer/commons/utils",
-			"revision": "2935a7030df1b17876faacc7f64f963de388f123",
-			"revisionTime": "2018-04-04T07:27:10Z"
+			"revision": "6d20d597a9b0d7f640031abcecbe9f7f4625c178",
+			"revisionTime": "2018-04-05T18:02:45Z"
 		},
 		{
 			"checksumSHA1": "rIG02T9e0/UDe1b9X3UkpIoa+Fk=",
 			"path": "github.com/ckeyer/commons/version",
-			"revision": "2935a7030df1b17876faacc7f64f963de388f123",
-			"revisionTime": "2018-04-04T07:27:10Z"
+			"revision": "6d20d597a9b0d7f640031abcecbe9f7f4625c178",
+			"revisionTime": "2018-04-05T18:02:45Z"
 		},
 		{
 			"checksumSHA1": "msTaHvvIzp3ANluqUAd1BufLEac=",
