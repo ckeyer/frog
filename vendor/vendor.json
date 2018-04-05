@@ -3,8 +3,33 @@
 	"ignore": "test",
 	"package": [
 		{
+			"checksumSHA1": "3w1n33TKtV0aoqU6skNPiOiyX3g=",
+			"origin": "github.com/ckeyer/commons/vendor/github.com/Masterminds/semver",
+			"path": "github.com/Masterminds/semver",
+			"revision": "2935a7030df1b17876faacc7f64f963de388f123",
+			"revisionTime": "2018-04-04T07:27:10Z"
+		},
+		{
+			"checksumSHA1": "NcH9iGLV1KaEe4V2MO0cjptWFZI=",
+			"path": "github.com/ckeyer/commons/debug",
+			"revision": "2935a7030df1b17876faacc7f64f963de388f123",
+			"revisionTime": "2018-04-04T07:27:10Z"
+		},
+		{
+			"checksumSHA1": "e4sjCEyGvaGNVox9HwCkWigVQVE=",
+			"path": "github.com/ckeyer/commons/pid",
+			"revision": "2935a7030df1b17876faacc7f64f963de388f123",
+			"revisionTime": "2018-04-04T07:27:10Z"
+		},
+		{
 			"checksumSHA1": "3xcjEO1iD1ZQO13RPLOBjeqIY2U=",
 			"path": "github.com/ckeyer/commons/utils",
+			"revision": "2935a7030df1b17876faacc7f64f963de388f123",
+			"revisionTime": "2018-04-04T07:27:10Z"
+		},
+		{
+			"checksumSHA1": "rIG02T9e0/UDe1b9X3UkpIoa+Fk=",
+			"path": "github.com/ckeyer/commons/version",
 			"revision": "2935a7030df1b17876faacc7f64f963de388f123",
 			"revisionTime": "2018-04-04T07:27:10Z"
 		},
