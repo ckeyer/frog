@@ -1,8 +1,7 @@
-package main
+package config
 
 import (
 	"os"
-	"time"
 
 	"github.com/ckeyer/commons/utils"
 	yaml "gopkg.in/yaml.v2"
@@ -11,8 +10,8 @@ import (
 type Global struct {
 	Period          utils.Duration
 	DeleteEveryTime bool
-
-	lastStart time.Time
+	DockerBin       string
+	LogFile         string
 }
 
 type Registry struct {
@@ -29,7 +28,7 @@ type Task struct {
 }
 
 type Config struct {
-	Global     Global
+	Global
 	Registries []Registry
 	Tasks      []Task
 }

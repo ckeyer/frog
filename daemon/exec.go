@@ -1,10 +1,14 @@
-package main
+package daemon
 
 import (
 	"fmt"
 	"os/exec"
 
 	"github.com/ckeyer/logrus"
+)
+
+var (
+	dockerBin = "docker"
 )
 
 func dockerLogin(reg, user, password string) error {
