@@ -61,7 +61,7 @@ func initRootCmd() {
 	}
 
 	rootCmd.PersistentFlags().BoolVarP(&debug, "debug", "D", false, "debug level")
-	rootCmd.PersistentFlags().StringVarP(&cfgFilename, "config-file", "f", "", "config filepath.")
+	rootCmd.PersistentFlags().StringVarP(&cfgFilename, "config-file", "c", "", "config filepath.")
 	rootCmd.PersistentFlags().StringVar(&dockerBin, "docker-bin-path", "", "docker binary filepath.")
 	rootCmd.PersistentFlags().StringVar(&logFile, "log-file", "", "log filepath.")
 }
