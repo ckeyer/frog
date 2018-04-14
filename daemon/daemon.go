@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
@@ -12,11 +13,21 @@ import (
 	"github.com/ckeyer/logrus"
 )
 
+const (
+	PidFile = "/var/run/frog.pid"
+)
+
+var (
+	ConfigFilePath = ""
+)
+
 type Daemon struct {
+	sync.Mutex
 	*config.Config
 	lastStart time.Time
 	pidFile   string
 	chStop    chan struct{}
+	chReload  chan struct{}
 }
 
 func New(cfg *config.Config) *Daemon {
@@ -24,7 +35,7 @@ func New(cfg *config.Config) *Daemon {
 	return &Daemon{
 		Config:    cfg,
 		lastStart: time.Now(),
-		pidFile:   "/var/run/frog.pid",
+		pidFile:   PidFile,
 		chStop:    make(chan struct{}),
 	}
 }
@@ -36,27 +47,26 @@ func (d *Daemon) Run() error {
 		return err
 	}
 
-	for _, reg := range d.Registries {
-		err := dockerLogin(reg.Server, reg.Username, reg.Password)
-		if err != nil {
-			return err
-		}
-		logrus.Infof("login %s use %s successful.", reg.Server, reg.Username)
+	if err := d.loginRegistries(d.Registries...); err != nil {
+		return err
 	}
 
 	wait := time.Second * 1
 	for {
 		logrus.Debugf("wait %s for next time.", wait)
+		d.chReload = make(chan struct{})
 		select {
 		case <-time.Tick(wait):
 			d.lastStart = time.Now()
-			d.doTasks()
+			d.doTasks(d.Config.Tasks...)
 		case <-d.chStop:
 			aft := time.Second
 			logrus.Debugf("stop Run() after %s", aft)
 			// wait for delete pid file.
 			time.Sleep(aft)
 			return nil
+		case <-d.chReload:
+			continue
 		}
 
 		last := d.lastStart
@@ -71,9 +81,23 @@ func (d *Daemon) Run() error {
 	return nil
 }
 
-func (d *Daemon) doTasks() {
-	for _, task := range d.Config.Tasks {
+func (d *Daemon) loginRegistries(regs ...config.Registry) error {
+	for _, reg := range regs {
+		err := dockerLogin(reg.Server, reg.Username, reg.Password)
+		if err != nil {
+			logrus.Errorf("login %s use %s failed. %s", reg.Server, reg.Username, err)
+			return err
+		}
+		logrus.Infof("login %s use %s successful.", reg.Server, reg.Username)
+	}
+	return nil
+}
+
+func (d *Daemon) doTasks(tasks ...config.Task) {
+	for _, task := range tasks {
 		select {
+		case <-d.chReload:
+			return
 		case <-d.chStop:
 			return
 		default:
@@ -94,6 +118,8 @@ func (d *Daemon) doOneTask(task config.Task) error {
 
 	for _, tag := range task.Tags {
 		select {
+		case <-d.chReload:
+			return nil
 		case <-d.chStop:
 			return fmt.Errorf("user stoped.")
 		default:
@@ -120,6 +146,26 @@ func (d *Daemon) Stop() {
 	}
 }
 
+// Reload reload
+func (d *Daemon) Reload() error {
+	cfg, err := config.OpenConfigFile(ConfigFilePath)
+	if err != nil {
+		logrus.Error("reload config file failed, %s", err)
+		return err
+	}
+
+	if err := d.loginRegistries(cfg.Registries...); err != nil {
+		return nil
+	}
+
+	d.Lock()
+	defer d.Unlock()
+	d.Config = cfg
+	close(d.chReload)
+
+	return nil
+}
+
 // initPidFile
 func (d *Daemon) initPidFile() error {
 	return pid.Generate(d.pidFile, d.chStop)
@@ -135,6 +181,9 @@ func (d *Daemon) waitStop() {
 	)
 
 	switch s := <-sigChan; s {
+	case syscall.SIGUSR1:
+		logrus.Debug("receive reload signal.")
+		d.Reload()
 	case syscall.SIGINT, syscall.SIGTERM:
 		d.Stop()
 	}

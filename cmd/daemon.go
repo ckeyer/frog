@@ -12,56 +12,61 @@ const (
 	defaultLogFile   = "/tmp/image_sync"
 )
 
-func initRootCmd() {
+func RootCmd() *cobra.Command {
 	var (
-		cfgFilename string
-		debug       bool
-		dockerBin   string
-		logFile     string
+		debug     bool
+		dockerBin string
+		logFile   string
 	)
-	rootCmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
-		if debug {
-			logrus.SetLevel(logrus.DebugLevel)
-		}
-	}
-	rootCmd.Run = func(cmd *cobra.Command, args []string) {
-		logrus.Debugf("starting...")
-		cfg, err := config.OpenConfigFile(cfgFilename)
-		if err != nil {
-			logrus.Errorf("open config file failed, %s", err)
-			return
-		}
-		if dockerBin != "" {
-			cfg.DockerBin = dockerBin
-		} else if cfg.DockerBin == "" {
-			cfg.DockerBin = defaultDockerBin
-		}
-		if logFile != "" {
-			cfg.LogFile = logFile
-		} else if cfg.LogFile == "" {
-			cfg.LogFile = defaultLogFile
-		}
 
-		logrus.Debugf("config.Global: %+v", cfg.Global)
-		for _, r := range cfg.Registries {
-			logrus.Debugf("config.Registry: %+v", r)
-		}
-		i := 1
-		for _, task := range cfg.Tasks {
-			for _, tag := range task.Tags {
-				logrus.Debugf("task %3d: %s:%s -> %s:%s", i, task.Origin, tag, task.Target, tag)
-				i++
+	cmd := &cobra.Command{
+		Use:   "frog",
+		Short: "docker images sync",
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			if debug {
+				logrus.SetLevel(logrus.DebugLevel)
 			}
-		}
+		},
+		Run: func(cmd *cobra.Command, args []string) {
+			logrus.Debugf("starting...")
+			cfg, err := config.OpenConfigFile(daemon.ConfigFilePath)
+			if err != nil {
+				logrus.Errorf("open config file failed, %s", err)
+				return
+			}
+			if dockerBin != "" {
+				cfg.DockerBin = dockerBin
+			} else if cfg.DockerBin == "" {
+				cfg.DockerBin = defaultDockerBin
+			}
+			if logFile != "" {
+				cfg.LogFile = logFile
+			} else if cfg.LogFile == "" {
+				cfg.LogFile = defaultLogFile
+			}
 
-		d := daemon.New(cfg)
-		if err := d.Run(); err != nil {
-			logrus.Error(err)
-		}
+			logrus.Debugf("config.Global: %+v", cfg.Global)
+			for _, r := range cfg.Registries {
+				logrus.Debugf("config.Registry: %+v", r)
+			}
+			i := 1
+			for _, task := range cfg.Tasks {
+				for _, tag := range task.Tags {
+					logrus.Debugf("task %3d: %s:%s -> %s:%s", i, task.Origin, tag, task.Target, tag)
+					i++
+				}
+			}
+
+			d := daemon.New(cfg)
+			if err := d.Run(); err != nil {
+				logrus.Error(err)
+			}
+		},
 	}
 
-	rootCmd.PersistentFlags().BoolVarP(&debug, "debug", "D", false, "debug level")
-	rootCmd.PersistentFlags().StringVarP(&cfgFilename, "config-file", "c", "", "config filepath.")
-	rootCmd.PersistentFlags().StringVar(&dockerBin, "docker-bin-path", "", "docker binary filepath.")
-	rootCmd.PersistentFlags().StringVar(&logFile, "log-file", "", "log filepath.")
+	cmd.PersistentFlags().BoolVarP(&debug, "debug", "D", false, "debug level")
+	cmd.Flags().StringVarP(&daemon.ConfigFilePath, "config-file", "c", "config.yaml", "config filepath.")
+	cmd.Flags().StringVar(&dockerBin, "docker-bin-path", "", "docker binary filepath.")
+	cmd.Flags().StringVar(&logFile, "log-file", "", "log filepath.")
+	return cmd
 }
