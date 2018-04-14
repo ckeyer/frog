@@ -1,6 +1,7 @@
 package daemon
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/signal"
@@ -14,11 +15,14 @@ import (
 )
 
 const (
-	PidFile = "/var/run/frog.pid"
+	// PidFile = "/var/run/frog.pid"
+	PidFile = "/tmp/frog.pid"
 )
 
 var (
 	ConfigFilePath = ""
+
+	ErrReload = errors.New("reload")
 )
 
 type Daemon struct {
@@ -52,23 +56,33 @@ func (d *Daemon) Run() error {
 	}
 
 	wait := time.Second * 1
+	isReload := false
 	for {
+		if isReload {
+			isReload = false
+			wait = time.Second * 1
+			logrus.Info("to reload.")
+		}
 		logrus.Debugf("wait %s for next time.", wait)
 		d.chReload = make(chan struct{})
 		select {
-		case <-time.Tick(wait):
-			d.lastStart = time.Now()
-			d.doTasks(d.Config.Tasks...)
 		case <-d.chStop:
 			aft := time.Second
 			logrus.Debugf("stop Run() after %s", aft)
 			// wait for delete pid file.
 			time.Sleep(aft)
 			return nil
+		case <-time.Tick(wait):
+			d.lastStart = time.Now()
+			if err := d.doTasks(d.Config.Tasks...); err != nil {
+				if err == ErrReload {
+					isReload = true
+				}
+			}
 		case <-d.chReload:
+			isReload = true
 			continue
 		}
-
 		last := d.lastStart
 		wait = time.Duration(d.Period)
 		if last.Add(wait).Before(time.Now()) {
@@ -93,19 +107,21 @@ func (d *Daemon) loginRegistries(regs ...config.Registry) error {
 	return nil
 }
 
-func (d *Daemon) doTasks(tasks ...config.Task) {
+func (d *Daemon) doTasks(tasks ...config.Task) error {
 	for _, task := range tasks {
 		select {
 		case <-d.chReload:
-			return
+			return ErrReload
 		case <-d.chStop:
-			return
+			return nil
 		default:
 			if err := d.doOneTask(task); err != nil {
 				logrus.Errorf("do %+v failed, %s", task, err)
+				return err
 			}
 		}
 	}
+	return nil
 }
 
 func (d *Daemon) doOneTask(task config.Task) error {
@@ -119,7 +135,7 @@ func (d *Daemon) doOneTask(task config.Task) error {
 	for _, tag := range task.Tags {
 		select {
 		case <-d.chReload:
-			return nil
+			return ErrReload
 		case <-d.chStop:
 			return fmt.Errorf("user stoped.")
 		default:
@@ -130,7 +146,8 @@ func (d *Daemon) doOneTask(task config.Task) error {
 				startAt: time.Now(),
 			}
 			logrus.Debugf("start %s:%s -> %s:%s", task.Origin, tag, task.Target, tag)
-			log.err = PullTagPushDelete(task.Origin, task.Target, tag, d.DeleteEveryTime)
+			time.Sleep(time.Second * 6)
+			// log.err = PullTagPushDelete(task.Origin, task.Target, tag, d.DeleteEveryTime)
 			f.WriteString(log.String())
 		}
 	}
@@ -178,13 +195,16 @@ func (d *Daemon) waitStop() {
 		sigChan,
 		syscall.SIGINT,
 		syscall.SIGTERM,
+		syscall.SIGUSR1,
+		syscall.SIGUSR2,
 	)
-
-	switch s := <-sigChan; s {
-	case syscall.SIGUSR1:
-		logrus.Debug("receive reload signal.")
-		d.Reload()
-	case syscall.SIGINT, syscall.SIGTERM:
-		d.Stop()
+	for {
+		switch s := <-sigChan; s {
+		case syscall.SIGUSR1, syscall.SIGUSR2:
+			logrus.Debug("receive reload signal.")
+			d.Reload()
+		case syscall.SIGINT, syscall.SIGTERM:
+			d.Stop()
+		}
 	}
 }
