@@ -146,8 +146,7 @@ func (d *Daemon) doOneTask(task config.Task) error {
 				startAt: time.Now(),
 			}
 			logrus.Debugf("start %s:%s -> %s:%s", task.Origin, tag, task.Target, tag)
-			time.Sleep(time.Second * 6)
-			// log.err = PullTagPushDelete(task.Origin, task.Target, tag, d.DeleteEveryTime)
+			log.err = PullTagPushDelete(task.Origin, task.Target, tag, d.DeleteEveryTime)
 			f.WriteString(log.String())
 		}
 	}
