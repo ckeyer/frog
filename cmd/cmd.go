@@ -19,7 +19,6 @@ func printVersionCmd() *cobra.Command {
 		Use:     "version",
 		Aliases: []string{"v"},
 		Run: func(cmd *cobra.Command, args []string) {
-			// logrus.Info(version.GetCompleteVersion())
 			version.Print(nil)
 		},
 	}

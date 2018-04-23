@@ -1,0 +1,25 @@
+sudo: required
+
+language: go
+
+go:
+  - master
+
+services:
+  - docker
+
+branches:
+  only:
+  - master
+  - /^v.*$/
+
+before_install:
+  - echo "start CI."
+  - env
+
+script:
+  - make test
+  - echo "test successful."
+
+after_success:
+
