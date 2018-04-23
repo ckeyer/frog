@@ -7,15 +7,16 @@ HASH := $(shell which shasum || which sha1sum)
 
 OS := $(shell go env GOOS)
 ARCH := $(shell go env GOARCH)
-VERSION := $(shell cat VERSION.txt)
+VERSION := $(shell cat VERSION)
 GIT_COMMIT := $(shell git rev-parse --short HEAD)
 GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 BUILD_AT := $(shell date "+%Y-%m-%dT%H:%M:%SZ%z")
 PACKAGE_NAME := $(APP)$(VERSION).$(OS)-$(ARCH)
 
-LD_FLAGS := -X github.com/ckeyer/commons/version.version=$(VERSION) \
- -X github.com/ckeyer/commons/version.gitCommit=$(GIT_COMMIT) \
- -X github.com/ckeyer/commons/version.buildAt=$(BUILD_AT) -w
+COMMONS_PKG := $(PKG)/vendor/github.com/ckeyer/commons
+LD_FLAGS := -X ${COMMONS_PKG}/version.version=$(VERSION) \
+ -X ${COMMONS_PKG}/version.gitCommit=$(GIT_COMMIT) \
+ -X ${COMMONS_PKG}/version.buildAt=$(BUILD_AT)
 
 GO_IMAGE := ckeyer/go:1.10
 
@@ -29,13 +30,12 @@ build-in-docker:
 	docker run --rm -it \
 	 -e CGO_ENABLED=0 \
 	 -v `pwd`:/go/src/${PKG} \
-	 -v `pwd`/bundles:/go/bin/ \
 	 -w /go/src/${PKG} \
 	 ${GO_IMAGE} make build
 
-build: env
-	$(GO) build -v -ldflags="$(LD_FLAGS)" -o ${GOPATH}/bin/$(APP) main.go
-	$(HASH) ${GOPATH}/bin/$(APP)
+build:
+	$(GO) build -v -ldflags="$(LD_FLAGS)" -o bundles/$(APP) main.go
+	$(HASH) bundles/$(APP)
 
 test:
 	$(GO) test $$(go list ./... |grep -v "vendor")
@@ -54,6 +54,6 @@ dev:
 	docker run --rm -it \
 	 --name $(APP)-dev \
 	 -p 8080:8080 \
-	 -v $(PWD)/..:/opt/gopath/src/$(PKG)/.. \
-	 -w /opt/gopath/src/$(PKG) \
+	 -v $(PWD):/go/src/$(PKG) \
+	 -w /go/src/$(PKG) \
 	 $(GO_IMAGE) sh
